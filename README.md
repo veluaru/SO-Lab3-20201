@@ -19,6 +19,8 @@ para un número máximo de iteraciones max_iters haga:
     Y = a * X + Y 
 fin
 ```
+Con el fin de hacer el ejercicio más divertido, el programa base propuesto, también calcula los valores promedio de cada iteración de Y. 
+
 
 # Pasos sugeridos para el desarrollo del laboratorio
 1. Clone este repositorio, compile y ejecute el código, trate de entenderlo, no es difícil.
