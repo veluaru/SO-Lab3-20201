@@ -28,6 +28,7 @@ int main(int argc, char* argv[]){
 	double* X;
 	double a;
 	double* Y;
+	double* Y_avgs;
 	int i, it;
 	// Variables to get execution time
 	struct timeval t_start, t_end;
@@ -70,9 +71,14 @@ int main(int argc, char* argv[]){
 	// initializing data
 	X = (double*) malloc(sizeof(double) * p);
 	Y = (double*) malloc(sizeof(double) * p);
+	Y_avgs = (double*) malloc(sizeof(double) * max_iters);
+
 	for(i = 0; i < p; i++){
 		X[i] = (double)rand() / RAND_MAX;
 		Y[i] = (double)rand() / RAND_MAX;
+	}
+	for(i = 0; i < max_iters; i++){
+		Y_avgs[i] = 0.0;
 	}
 	a = (double)rand() / RAND_MAX;
 
@@ -84,7 +90,9 @@ int main(int argc, char* argv[]){
 	for(it = 0; it++ < max_iters; it++){
 		for(i = 0; i < p; i++){
 			Y[i] = Y[i] + a * X[i];
+			Y_avgs[it] += Y[i];
 		}
+		Y_avgs[it] = Y_avgs[it] / p;
 	}
 	gettimeofday(&t_end, NULL);
 	
@@ -93,5 +101,6 @@ int main(int argc, char* argv[]){
 	exec_time += (t_end.tv_usec - t_start.tv_usec) / 1000.0; // us to ms
 	printf("Execution time: %f ms \n", exec_time);
 	printf("Last 3 values of Y: %f, %f, %f \n", Y[p-3], Y[p-2], Y[p-1]);
+	printf("Last 3 values of Y_avgs: %f, %f, %f \n", Y_avgs[max_iters-3], Y_avgs[max_iters-2], Y_avgs[max_iters-1]);
 	return 0;
 }	
