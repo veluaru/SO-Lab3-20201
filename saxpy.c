@@ -32,6 +32,7 @@ double a;
 double* Y;
 double* Y_avgs;
 int i, it;
+
 // Variables to get execution time
 struct timeval t_start, t_end;
 double exec_time;
@@ -46,20 +47,20 @@ typedef struct _param{
 sem_t mutex;
 
 void *funcionSaxpy(void *arg){
-
+	int primero, segundo;
 	double total;
 	param_t* limites = (param_t *) arg;
 	int ini = limites->ini;
 	int end = limites->end;
 
-	for(it = 0; it < max_iters; it++){
+	for(primero = 0; primero < max_iters; primero++){
 		total = 0;
-		for(i = ini; i < end; i++){
-			Y[i] = Y[i] + a * X[i];
-			total += Y[i];
+		for(segundo = ini; segundo < end; segundo++){
+			Y[segundo] = Y[segundo] + a * X[segundo];
+			total += Y[segundo];
 		}
 		sem_wait(&mutex);
-		Y_avgs[it] += total / p;
+		Y_avgs[primero] += total / p;	
 		sem_post(&mutex);
 	}
 	return NULL;
@@ -105,9 +106,9 @@ void *cuatroHilos(void *arg)
 	param2.end = p/2;
 	param_t param3;
 	param3.ini = p/2;
-	param3.end = p*(3/4);
+	param3.end = p*3/4;
 	param_t param4;
-	param4.ini = p*(3/4);
+	param4.ini = p*3/4;
 	param4.end = p;
 	pthread_create(&hilo1, NULL, funcionSaxpy, &param1);
 	pthread_create(&hilo2, NULL, funcionSaxpy, &param2);
@@ -137,21 +138,21 @@ void *ochoHilos(void *arg)
 	param2.end = p/4;
 	param_t param3;
 	param3.ini = p/4;
-	param3.end = p*(3/8);
+	param3.end = p*3/8;
 	param_t param4;
-	param4.ini = p*(3/8);
+	param4.ini = p*3/8;
 	param4.end = p/2;
 	param_t param5;
 	param5.ini = p/2;
-	param5.end = p*(5/8);
+	param5.end = p*5/8;
 	param_t param6;
-	param6.ini = p*(5/8);
-	param6.end = p*(6/8);
+	param6.ini = p*5/8;
+	param6.end = p*6/8;
 	param_t param7;
-	param7.ini = p*(6/8);
-	param7.end = p*(7/8);
+	param7.ini = p*6/8;
+	param7.end = p*7/8;
 	param_t param8;
-	param8.ini = p*(7/8);
+	param8.ini = p*7/8;
 	param8.end = p;
 	pthread_create(&hilo1, NULL, funcionSaxpy, &param1);
 	pthread_create(&hilo2, NULL, funcionSaxpy, &param2);
@@ -252,13 +253,7 @@ int main(int argc, char* argv[]){
 	sem_init(&mutex, 0, 1);
 	//SAXPY iterative SAXPY mfunction
 	if(argc==1){
-		for(it = 0; it < max_iters; it++){
-			for(i = 0; i < p; i++){
-				Y[i] = Y[i] + a * X[i];
-				Y_avgs[it] += Y[i];
-			}
-			Y_avgs[it] = Y_avgs[it] / p;
-		}
+		unHilo(NULL);
 	}else{
 
 		if((strcmp(argv[1], "1")==0)){
