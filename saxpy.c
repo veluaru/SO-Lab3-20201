@@ -17,22 +17,169 @@
 #include <stdlib.h>
 #include <assert.h>
 #include <sys/time.h>
+#include <pthread.h>
+#include <string.h>
+#include <semaphore.h>
+
+// Variables to obtain command line parameters
+unsigned int seed = 1;
+int p = 10000000;
+int n_threads = 1;
+int max_iters = 1000;
+// Variables to perform SAXPY operation
+double* X;
+double a;
+double* Y;
+double* Y_avgs;
+int i, it;
+// Variables to get execution time
+struct timeval t_start, t_end;
+double exec_time;
+
+//Objeto para definir limites de los hilos
+typedef struct _param{
+	int ini;
+	int end;
+} param_t;
+
+//Semaforo
+sem_t mutex;
+
+void *funcionSaxpy(void *arg){
+
+	double total;
+	param_t* limites = (param_t *) arg;
+	int ini = limites->ini;
+	int end = limites->end;
+
+	for(it = 0; it < max_iters; it++){
+		total = 0;
+		for(i = ini; i < end; i++){
+			Y[i] = Y[i] + a * X[i];
+			total += Y[i];
+		}
+		sem_wait(&mutex);
+		Y_avgs[it] += total / p;
+		sem_post(&mutex);
+	}
+	return NULL;
+};
+
+void *unHilo(void *arg)
+{
+	pthread_t hilo1;
+	param_t param1;
+	param1.ini = 0;
+	param1.end = p/1;
+	pthread_create(&hilo1, NULL, funcionSaxpy, &param1);
+	pthread_join(hilo1, NULL);
+	return NULL;
+};
+void *dosHilos(void *arg)
+{
+	pthread_t hilo1;
+	pthread_t hilo2;
+	param_t param1;
+	param1.ini = 0;
+	param1.end = p/2;
+	param_t param2;
+	param2.ini = p/2;
+	param2.end = p;
+	pthread_create(&hilo1, NULL, funcionSaxpy, &param1);
+	pthread_create(&hilo2, NULL, funcionSaxpy, &param2);
+	pthread_join(hilo1, NULL);
+	pthread_join(hilo2, NULL);
+	return NULL;
+};
+void *cuatroHilos(void *arg)
+{
+	pthread_t hilo1;
+	pthread_t hilo2;
+	pthread_t hilo3;
+	pthread_t hilo4;
+	param_t param1;
+	param1.ini = 0;
+	param1.end = p/4;
+	param_t param2;
+	param2.ini = p/4;
+	param2.end = p/2;
+	param_t param3;
+	param3.ini = p/2;
+	param3.end = p*(3/4);
+	param_t param4;
+	param4.ini = p*(3/4);
+	param4.end = p;
+	pthread_create(&hilo1, NULL, funcionSaxpy, &param1);
+	pthread_create(&hilo2, NULL, funcionSaxpy, &param2);
+	pthread_create(&hilo3, NULL, funcionSaxpy, &param3);
+	pthread_create(&hilo4, NULL, funcionSaxpy, &param4);
+	pthread_join(hilo1, NULL);
+	pthread_join(hilo2, NULL);
+	pthread_join(hilo3, NULL);
+	pthread_join(hilo4, NULL);
+	return NULL;
+};
+void *ochoHilos(void *arg)
+{
+	pthread_t hilo1;
+	pthread_t hilo2;
+	pthread_t hilo3;
+	pthread_t hilo4;
+	pthread_t hilo5;
+	pthread_t hilo6;
+	pthread_t hilo7;
+	pthread_t hilo8;
+	param_t param1;
+	param1.ini = 0;
+	param1.end = p/8;
+	param_t param2;
+	param2.ini = p/8;
+	param2.end = p/4;
+	param_t param3;
+	param3.ini = p/4;
+	param3.end = p*(3/8);
+	param_t param4;
+	param4.ini = p*(3/8);
+	param4.end = p/2;
+	param_t param5;
+	param5.ini = p/2;
+	param5.end = p*(5/8);
+	param_t param6;
+	param6.ini = p*(5/8);
+	param6.end = p*(6/8);
+	param_t param7;
+	param7.ini = p*(6/8);
+	param7.end = p*(7/8);
+	param_t param8;
+	param8.ini = p*(7/8);
+	param8.end = p;
+	pthread_create(&hilo1, NULL, funcionSaxpy, &param1);
+	pthread_create(&hilo2, NULL, funcionSaxpy, &param2);
+	pthread_create(&hilo3, NULL, funcionSaxpy, &param3);
+	pthread_create(&hilo4, NULL, funcionSaxpy, &param4);
+	pthread_create(&hilo5, NULL, funcionSaxpy, &param5);
+	pthread_create(&hilo6, NULL, funcionSaxpy, &param6);
+	pthread_create(&hilo7, NULL, funcionSaxpy, &param7);
+	pthread_create(&hilo8, NULL, funcionSaxpy, &param8);
+	pthread_join(hilo1, NULL);
+	pthread_join(hilo2, NULL);
+	pthread_join(hilo3, NULL);
+	pthread_join(hilo4, NULL);
+	pthread_join(hilo5, NULL);
+	pthread_join(hilo6, NULL);
+	pthread_join(hilo7, NULL);
+	pthread_join(hilo8, NULL);
+	return NULL;
+};
 
 int main(int argc, char* argv[]){
-	// Variables to obtain command line parameters
-	unsigned int seed = 1;
-  	int p = 10000000;
-  	int n_threads = 2;
-  	int max_iters = 1000;
-  	// Variables to perform SAXPY operation
-	double* X;
-	double a;
-	double* Y;
-	double* Y_avgs;
-	int i, it;
-	// Variables to get execution time
-	struct timeval t_start, t_end;
-	double exec_time;
+	 if(argc!=1){
+		char* palabra = argv[1];
+	 	n_threads = palabra[0]-48;
+	 }else{
+	 	n_threads = 0;
+	 }
+	
 
 	// Getting input values
 	int opt;
@@ -102,13 +249,30 @@ int main(int argc, char* argv[]){
 	 *	Function to parallelize 
 	 */
 	gettimeofday(&t_start, NULL);
+	sem_init(&mutex, 0, 1);
 	//SAXPY iterative SAXPY mfunction
-	for(it = 0; it < max_iters; it++){
-		for(i = 0; i < p; i++){
-			Y[i] = Y[i] + a * X[i];
-			Y_avgs[it] += Y[i];
+	if(argc==1){
+		for(it = 0; it < max_iters; it++){
+			for(i = 0; i < p; i++){
+				Y[i] = Y[i] + a * X[i];
+				Y_avgs[it] += Y[i];
+			}
+			Y_avgs[it] = Y_avgs[it] / p;
 		}
-		Y_avgs[it] = Y_avgs[it] / p;
+	}else{
+
+		if((strcmp(argv[1], "1")==0)){
+			unHilo(NULL);
+		}
+		if((strcmp(argv[1], "2")==0)){
+			dosHilos(NULL);
+		}
+		if((strcmp(argv[1], "4")==0)){
+			cuatroHilos(NULL);
+		}
+		if((strcmp(argv[1], "8")==0)){
+			ochoHilos(NULL);
+		}
 	}
 	gettimeofday(&t_end, NULL);
 
